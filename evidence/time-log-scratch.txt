@@ -1,0 +1,3 @@
+Date        From-To       What I worked on
+14 Nov      13:00-13:20   Read assignment pack, START_HERE, README, docs; got system running
+14 Nov      13:20-13:50   Phase 0: created GitHub repo, fixed remotes, pushed, git identity
