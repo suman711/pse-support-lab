@@ -1,8 +1,8 @@
 # Submission
 
-- **Name:**
+- **Name: Sanjay Suman S G**
 - **Date submitted:**
-- **Repository link:**
+- **Repository link: https://github.com/suman711/pse-support-lab**
 - **Total time spent (real time):**
 
 > Replies below are drafts written on the **exercise clock** (Monday 16 November 2026, Asia/Dubai). Keep your real time in the time log at the end. Put screenshots, log excerpts and query output in `evidence/` and link to them.
