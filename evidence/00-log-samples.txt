@@ -1,0 +1,24 @@
+1. For {service="api"} | json
+
+2026-11-14 20:14:22.798 INFO {
+  "time": "2026-11-14T14:44:22.798241152Z",
+  "level": "INFO",
+  "msg": "http request",
+  "method": "GET",S
+  "path": "/v1/sellers",
+  "route": "/v1/sellers",
+  "status": 200,
+  "duration_ms": 0
+} 
+
+2. For {service="asp-mock"} | json
+
+2026-11-14 19:50:22.527 INFO {
+  "time": "2026-11-14T14:20:22.526678706Z",
+  "level": "INFO",
+  "msg": "document accepted",
+  "message_id": "417a9545-5eb3-4e5d-9993-46733f881110",
+  "sender": "0235:1002345678",
+  "receiver": "0235:1001293847",
+  "invoice_number": "DRT-2611-005"
+} 
