@@ -1,0 +1,92 @@
+PS C:\Users\sangi\OneDrive\Desktop\Complyance\Complyance_PSE_Assignment_Round2_Support_Lab\Complyance_PSE_Assignment\pse-support-lab> docker compose exec postgres psql -U invoicely -d invoicely
+psql (16.15)
+Type "help" for help.
+
+invoicely=# \dt
+              List of relations
+ Schema |      Name      | Type  |   Owner   
+--------+----------------+-------+-----------
+ public | imports        | table | invoicely
+ public | invoice_events | table | invoicely
+ public | invoices       | table | invoicely
+ public | sellers        | table | invoicely
+(4 rows)
+
+invoicely=# \d imports
+                           Table "public.imports"
+    Column     |           Type           | Collation | Nullable | Default  
+---------------+--------------------------+-----------+----------+----------
+ id            | uuid                     |           | not null | 
+ seller_id     | bigint                   |           | not null | 
+ filename      | text                     |           | not null | 
+ status        | text                     |           | not null | 
+ error         | text                     |           | not null | ''::text
+ row_count     | integer                  |           | not null | 0
+ invoice_count | integer                  |           | not null | 0
+ duration_ms   | bigint                   |           |          | 
+ created_at    | timestamp with time zone |           | not null | now()
+ completed_at  | timestamp with time zone |           |          | 
+Indexes:
+    "imports_pkey" PRIMARY KEY, btree (id)
+    "imports_created_at_idx" btree (created_at DESC)
+Foreign-key constraints:
+    "imports_seller_id_fkey" FOREIGN KEY (seller_id) REFERENCES sellers(id)
+Referenced by:
+    TABLE "invoices" CONSTRAINT "invoices_import_id_fkey" FOREIGN KEY (import_id) REFERENCES imports(id)
+
+invoicely=# \d invoices
+                            Table "public.invoices"
+     Column     |           Type           | Collation | Nullable |   Default   
+----------------+--------------------------+-----------+----------+-------------
+ id             | uuid                     |           | not null | 
+ import_id      | uuid                     |           | not null | 
+ seller_id      | bigint                   |           | not null | 
+ invoice_number | text                     |           | not null | 
+ buyer_name     | text                     |           | not null | ''::text
+ issue_date     | text                     |           | not null | ''::text
+ currency       | text                     |           | not null | ''::text
+ total_excl_vat | numeric(14,2)            |           | not null | 0
+ total_vat      | numeric(14,2)            |           | not null | 0
+ total_incl_vat | numeric(14,2)            |           | not null | 0
+ status         | text                     |           | not null | 
+ rejected_by    | text                     |           | not null | ''::text
+ errors         | jsonb                    |           | not null | '[]'::jsonb
+ payload        | jsonb                    |           | not null | 
+ asp_message_id | text                     |           | not null | ''::text
+ asp_response   | jsonb                    |           |          | 
+ created_at     | timestamp with time zone |           | not null | now()
+ updated_at     | timestamp with time zone |           | not null | now()
+Indexes:
+    "invoices_pkey" PRIMARY KEY, btree (id)
+    "invoices_import_idx" btree (import_id)
+    "invoices_seller_number_idx" btree (seller_id, invoice_number)
+    "invoices_status_idx" btree (status)
+Foreign-key constraints:
+    "invoices_import_id_fkey" FOREIGN KEY (import_id) REFERENCES imports(id)
+    "invoices_seller_id_fkey" FOREIGN KEY (seller_id) REFERENCES sellers(id)
+Referenced by:                                          
+    TABLE "invoice_events" CONSTRAINT "invoice_events_invoice_id_fkey" FOREIGN KEY (invoice_id) REFERENCES invoices(id)
+
+invoicely=# \d invoice_events
+                                       Table "public.invoice_events"
+   Column   |           Type           | Collation | Nullable |                  Default                   
+------------+--------------------------+-----------+----------+--------------------------------------------
+ id         | bigint                   |           | not null | nextval('invoice_events_id_seq'::regclass)
+ invoice_id | uuid                     |           | not null | 
+ status     | text                     |           | not null | 
+ detail     | text                     |           | not null | ''::text
+ created_at | timestamp with time zone |           | not null | now()
+Indexes:
+    "invoice_events_pkey" PRIMARY KEY, btree (id)
+    "invoice_events_invoice_idx" btree (invoice_id, id)
+Foreign-key constraints:
+    "invoice_events_invoice_id_fkey" FOREIGN KEY (invoice_id) REFERENCES invoices(id)
+
+invoicely=# SELECT status, count(*) FROM invoices GROUP BY status;
+  status  | count 
+----------+-------
+ Rejected |    10
+ Accepted |    40
+(2 rows)
+
+invoicely=# \q
