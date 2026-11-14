@@ -1,0 +1,62 @@
+126: 				Subdivision: first.Get(sheet.ColBuyerSubdivision),
+127: 				Country:     first.Get(sheet.ColBuyerCountry),
+128: 			},
+129: 		},
+130: 		Payment: Payment{
+131: 			MeansCode: first.Get(sheet.ColPaymentMeans),
+132: 			AccountID: first.Get(sheet.ColPaymentAccount),
+133: 		},
+134: 	}
+135: 	for _, r := range g.Rows {
+136: 		net := num(r, sheet.ColLineNetAmount)
+137: 		rate := num(r, sheet.ColVATRate)
+138: 		inv.Lines = append(inv.Lines, Line{
+139: 			ID:              r.Get(sheet.ColLineID),
+140: 			Name:            r.Get(sheet.ColItemName),
+141: 			Quantity:        num(r, sheet.ColQuantity),
+142: 			UnitCode:        r.Get(sheet.ColUnit),
+143: 			UnitPrice:       num(r, sheet.ColNetPrice),
+144: 			NetAmount:       net,
+145: 			VATCategory:     r.Get(sheet.ColVATCategory),
+146: 			VATRate:         rate,
+147: 			VATAmount:       round2(net * rate / 100),
+148: 			ExemptionReason: r.Get(sheet.ColExemptionReason),
+149: 			ItemType:        r.Get(sheet.ColItemType),
+150: 		})
+151: 	}
+152: 	inv.TaxSubtotals, inv.Totals = computeTotals(inv.Lines)
+153: 	return inv
+154: }
+155: 
+156: // computeTotals builds the VAT breakdown and document totals.
+157: func computeTotals(lines []Line) ([]TaxSubtotal, Totals) {
+158: 	byCategory := map[string]*TaxSubtotal{}
+159: 	var net, vat, gross float64
+160: 	for _, l := range lines {
+161: 		s, ok := byCategory[l.VATCategory]
+162: 		if !ok {
+163: 			s = &TaxSubtotal{Category: l.VATCategory, Rate: l.VATRate}
+164: 			byCategory[l.VATCategory] = s
+165: 		}
+166: 		s.TaxableAmount += l.NetAmount
+167: 		s.TaxAmount += l.VATAmount
+168: 
+169: 		net += l.NetAmount
+170: 		vat += l.VATAmount
+171: 		gross += l.Quantity * l.UnitPrice * (1 + l.VATRate/100)
+172: 	}
+173: 	subtotals := make([]TaxSubtotal, 0, len(byCategory))
+174: 	for _, s := range byCategory {
+175: 		s.TaxableAmount = round2(s.TaxableAmount)
+176: 		s.TaxAmount = round2(s.TaxAmount)
+177: 		subtotals = append(subtotals, *s)
+178: 	}
+179: 	sort.Slice(subtotals, func(i, j int) bool { return subtotals[i].Category < subtotals[j].Category })
+180: 	return subtotals, Totals{
+181: 		LineExtensionAmount: round2(net),
+182: 		TaxExclusiveAmount:  round2(net),
+183: 		TaxAmount:           round2(vat),
+184: 		TaxInclusiveAmount:  round2(gross),
+185: 		PayableAmount:       round2(gross),
+186: 	}
+187: }

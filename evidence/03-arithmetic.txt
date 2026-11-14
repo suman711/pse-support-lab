@@ -1,0 +1,6 @@
+Invoice ANF-2611-0046-I39U (source: evidence/03-alnoor-0046-lines.txt)
+L1: 1512 x 2.917 = 4410.504 ; net(file)=4410.50 ; VAT=round2(4410.50*0.05=220.525)=220.53
+L2:  732 x 1.275 =  933.300 ; net(file)= 933.30 ; VAT=round2( 933.30*0.05= 46.665)= 46.67
+net sum=5343.80  vat sum=267.20  => excl+vat = 5611.00   (ASP expects this, asp-mock/main.go:225)
+gross (pint.go:171) = 4410.504*1.05 + 933.3*1.05 = 4631.0292 + 979.965 = 5610.9942 -> 5610.99 (matches DB)
+diff = 0.01 -> BR-CO-15

@@ -1,0 +1,50 @@
+187: 
+188: func cents(v float64) int64 { return int64(math.Round(v * 100)) }
+189: 
+190: func money(c int64) string { return fmt.Sprintf("%.2f", float64(c)/100) }
+191: 
+192: func validate(d *document) []ruleError {
+193: 	var errs []ruleError
+194: 	if d.CustomizationID != customizationID {
+195: 		errs = append(errs, ruleError{"PEPPOL-R001", fmt.Sprintf("Specification identifier must be '%s'.", customizationID)})
+196: 	}
+197: 	if !trnPattern.MatchString(d.Seller.TRN) {
+198: 		errs = append(errs, ruleError{"IBR-132-AE", "Seller VAT identifier (IBT-031) must be a TRN: 15 digits, starting with 1 and ending with 03."})
+199: 	}
+200: 	if !trnPattern.MatchString(d.Buyer.TRN) {
+201: 		errs = append(errs, ruleError{"IBR-132-AE", "Buyer VAT identifier (IBT-048) must be a TRN: 15 digits, starting with 1 and ending with 03."})
+202: 	}
+203: 	if len(d.Lines) == 0 {
+204: 		errs = append(errs, ruleError{"BR-16", "An invoice must have at least one invoice line (IBG-25)."})
+205: 	}
+206: 	var lineSum int64
+207: 	for _, l := range d.Lines {
+208: 		lineSum += cents(l.NetAmount)
+209: 	}
+210: 	t := d.Totals
+211: 	if lineSum != cents(t.LineExtensionAmount) {
+212: 		errs = append(errs, ruleError{"BR-CO-10", fmt.Sprintf(
+213: 			"Sum of Invoice line net amount (IBT-106) must equal the sum of all Invoice line net amounts (IBT-131). Got %s, expected %s.",
+214: 			money(cents(t.LineExtensionAmount)), money(lineSum))})
+215: 	}
+216: 	var subtotalTax int64
+217: 	for _, s := range d.TaxSubtotals {
+218: 		subtotalTax += cents(s.TaxAmount)
+219: 	}
+220: 	if subtotalTax != cents(t.TaxAmount) {
+221: 		errs = append(errs, ruleError{"BR-CO-14", fmt.Sprintf(
+222: 			"Invoice total VAT amount (IBT-110) must equal the sum of VAT category tax amounts (IBT-117). Got %s, expected %s.",
+223: 			money(cents(t.TaxAmount)), money(subtotalTax))})
+224: 	}
+225: 	expectedInclusive := cents(t.TaxExclusiveAmount) + cents(t.TaxAmount)
+226: 	if cents(t.TaxInclusiveAmount) != expectedInclusive {
+227: 		errs = append(errs, ruleError{"BR-CO-15", fmt.Sprintf(
+228: 			"Invoice total amount with VAT (IBT-112) must equal Invoice total amount without VAT (IBT-109) + Invoice total VAT amount (IBT-110). Got %s, expected %s.",
+229: 			money(cents(t.TaxInclusiveAmount)), money(expectedInclusive))})
+230: 	}
+231: 	return errs
+232: }
+233: 
+234: // ---------- http ----------
+235: 
+236: type server struct {

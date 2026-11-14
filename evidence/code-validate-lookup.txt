@@ -1,0 +1,14 @@
+
+services\api\internal\validate\validate.go:24:// Directory answers whether a Peppol participant is registered.
+services\api\internal\validate\validate.go:25:type Directory interface {
+services\api\internal\validate\validate.go:26:	IsRegistered(ctx context.Context, participantID string) (bool, error)
+services\api\internal\validate\validate.go:41:	dir      Directory
+services\api\internal\validate\validate.go:46:func New(dir Directory, invoices Invoices, log *slog.Logger) *Validator {
+services\api\internal\validate\validate.go:166:		registered, err := v.dir.IsRegistered(ctx, buyer)
+services\api\internal\validate\validate.go:169:			v.log.Warn("participant lookup failed", "participant_id", buyer, "row", r.Number, 
+"error", err)
+services\api\internal\validate\validate.go:170:		case !registered:
+services\api\internal\validate\validate.go:171:			add("AE-BR-11", sheet.ColBuyerPeppolID, fmt.Sprintf("Buyer Peppol participant '%s' is 
+not registered on the Peppol network.", buyer))
+
+

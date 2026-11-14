@@ -1,0 +1,25 @@
+291: 			v.ID, StatusParsed, "Created from uploaded file")
+292: 	}
+293: 	return s.db.SendBatch(ctx, batch).Close()
+294: }
+295: 
+296: // ExistingStatus returns the status of a non-rejected invoice with the same number
+297: // for the seller, uploaded in another import.
+298: func (s *Store) ExistingStatus(ctx context.Context, sellerID int64, invoiceNumber, excludeImportID string) (string, bool, error) {
+299: 	var status string
+300: 	err := s.db.QueryRow(ctx, `SELECT status FROM invoices
+301: 		WHERE seller_id = $1 AND invoice_number = $2 AND import_id <> $3 AND status <> $4
+302: 		ORDER BY created_at LIMIT 1`, sellerID, invoiceNumber, excludeImportID, StatusRejected).Scan(&status)
+303: 	if errors.Is(err, pgx.ErrNoRows) {
+304: 		return "", false, nil
+305: 	}
+306: 	return status, err == nil, err
+307: }
+308: 
+309: // SetStatus moves an invoice to a new status and records an event.
+310: func (s *Store) SetStatus(ctx context.Context, id, status, detail string) error {
+311: 	return s.update(ctx, id, status, detail, `UPDATE invoices SET status = $2, updated_at = now() WHERE id = $1`, id, status)
+312: }
+313: 
+314: // MarkRejected stores the rejection errors and who rejected the invoice.
+315: func (s *Store) MarkRejected(ctx context.Context, id, rejectedBy string, errs any, aspResponse []byte, detail string) error {
